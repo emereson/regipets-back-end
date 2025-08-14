@@ -1,8 +1,8 @@
-import { Op } from "sequelize";
-import { catchAsync } from "../../utils/catchAsync.js";
-import { Mascota } from "./mascota.model.js";
-import { AppError } from "../../utils/AppError.js";
-import { User } from "../user/user.model.js";
+import { Op } from 'sequelize';
+import { catchAsync } from '../../utils/catchAsync.js';
+import { Mascota } from './mascota.model.js';
+import { AppError } from '../../utils/AppError.js';
+import { User } from '../user/user.model.js';
 
 // export const findAll = catchAsync(async (req, res, next) => {
 //   const pedidos = await Pedido.findAll({
@@ -21,7 +21,7 @@ export const findOne = catchAsync(async (req, res, next) => {
   const { mascota } = req;
 
   return res.status(200).json({
-    status: "Success",
+    status: 'Success',
     mascota,
   });
 });
@@ -45,7 +45,7 @@ export const findOneDni = catchAsync(async (req, res, next) => {
   }
 
   return res.status(200).json({
-    status: "Success",
+    status: 'Success',
     mascota,
   });
 });
