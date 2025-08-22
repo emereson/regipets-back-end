@@ -1,27 +1,29 @@
-import express, { Router } from "express";
-import morgan from "morgan";
-import cors from "cors";
-import helmet from "helmet";
-import hpp from "hpp";
-import rateLimit from "express-rate-limit";
-import xss from "xss-clean";
+import express, { Router } from 'express';
+import morgan from 'morgan';
+import cors from 'cors';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import rateLimit from 'express-rate-limit';
+import xss from 'xss-clean';
 
-import { AppError } from "./utils/AppError.js";
-import { globalErrorHandler } from "./utils/errors.js";
-import { mascotaRouter } from "./modules/mascotas/mascota.routes.js";
-import { userRouter } from "./modules/user/user.routes.js";
+import { AppError } from './utils/AppError.js';
+import { globalErrorHandler } from './utils/errors.js';
+import { mascotaRouter } from './modules/mascotas/mascota.routes.js';
+import { userRouter } from './modules/user/user.routes.js';
+import { productoRouter } from './modules/producto/producto.routes.js';
+import { pedidoRouter } from './modules/checkout/pedido/pedido.routes.js';
 
 const app = express();
 
-app.set("trust proxy", 1);
+app.set('trust proxy', 1);
 const limiter = rateLimit({
   max: 10000,
   windowMs: 60 * 60 * 1000,
-  message: "Too many requests from this IP, please try again in one hour.",
+  message: 'Too many requests from this IP, please try again in one hour.',
 });
 
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
 }
 app.use(express.json());
 app.use(cors());
@@ -32,11 +34,13 @@ app.use(
   })
 );
 app.use(hpp());
-app.use("/api/v1", limiter);
-app.use("/api/v1/mascota", mascotaRouter);
-app.use("/api/v1/user", userRouter);
+app.use('/api/v1', limiter);
+app.use('/api/v1/mascota', mascotaRouter);
+app.use('/api/v1/user', userRouter);
+app.use('/api/v1/producto', productoRouter);
+app.use('/api/v1/pedido', pedidoRouter);
 
-app.all("*", (req, res, next) => {
+app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server! 💀`, 404));
 });
 

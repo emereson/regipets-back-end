@@ -1,5 +1,13 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, PORT } = process.env;
+export const {
+  DB_NAME,
+  DB_USER,
+  DB_PASSWORD,
+  DB_HOST,
+  PORT,
+  WEBHOOK_URL,
+  MP_ACCESS_TOKEN,
+} = process.env;

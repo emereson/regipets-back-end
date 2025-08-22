@@ -1,11 +1,11 @@
-import express from "express";
-import * as userMiddleware from "./user.middleware.js";
-import * as userController from "./user.controllers.js";
+import express from 'express';
+import * as userMiddleware from './user.middleware.js';
+import * as userController from './user.controllers.js';
 // import * as authMiddleware from "../user/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/", userController.findAll);
+router.get('/', userController.findAll);
 // router.use(authMiddleware.protect);
 // router.post('/', pedidoController.create);
 
