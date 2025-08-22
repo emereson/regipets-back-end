@@ -10,4 +10,5 @@ export const {
   PORT,
   WEBHOOK_URL,
   MP_ACCESS_TOKEN,
+  FRONTEND_URL,
 } = process.env;

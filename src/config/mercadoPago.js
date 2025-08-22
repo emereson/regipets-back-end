@@ -1,6 +1,6 @@
 // utils/mercadoPago.js
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
-import { MP_ACCESS_TOKEN, WEBHOOK_URL } from '../../config.js';
+import { FRONTEND_URL, MP_ACCESS_TOKEN, WEBHOOK_URL } from '../../config.js';
 
 const client = new MercadoPagoConfig({
   accessToken: MP_ACCESS_TOKEN, // Usa variables de entorno
@@ -35,14 +35,14 @@ export const crearPreference = async (pedido, productos, customerData) => {
       },
     },
     back_urls: {
-      success: 'https://xxxx.ngrok.io/success',
-      failure: 'https://xxxx.ngrok.io/failure',
-      pending: 'https://xxxx.ngrok.io/pending',
+      success: `${FRONTEND_URL}/success/${pedido.id}`,
     },
     auto_return: 'approved',
     notification_url: `${WEBHOOK_URL}/pedido/webhook`,
+
     external_reference: String(pedido.id),
   };
+  console.log(`${WEBHOOK_URL}/pedido/webhook`);
 
   const response = await preference.create({ body });
 

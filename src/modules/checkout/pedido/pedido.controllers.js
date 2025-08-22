@@ -1,3 +1,4 @@
+import { where } from 'sequelize';
 import {
   crearPreference,
   processPayment,
@@ -8,12 +9,13 @@ import { costosDelivery } from '../../../utils/costoDelivery.js';
 import { DatosClientes } from '../datosClientes/datosClientes.model.js';
 import { ProductoPedido } from '../productosPedido/productosPedido.model.js';
 import { Pedido } from './pedido.model.js';
+
 export const findOne = catchAsync(async (req, res, next) => {
-  const { producto } = req;
+  const { pedido } = req;
 
   return res.status(200).json({
     status: 'Success',
-    producto,
+    pedido,
   });
 });
 
@@ -106,6 +108,8 @@ export const create = catchAsync(async (req, res, next) => {
 export const webhook = catchAsync(async (req, res, next) => {
   const { query } = req;
   console.log(query);
+
+  // 👇 esto está bien, pero ojo: Mercado Pago envía la data en "query" o "body" según el evento
   const paymentId = query.id || query['data.id'];
   if (!paymentId) {
     throw new Error('ID de pago no proporcionado');
@@ -114,10 +118,16 @@ export const webhook = catchAsync(async (req, res, next) => {
   const paymentData = await processPayment(paymentId);
   console.log(paymentData);
 
+  if (paymentData.status === 'approved') {
+    await Pedido.update(
+      { status: 'pagada' },
+      { where: { id: paymentData.external_reference } }
+    );
+  }
   res.status(201).json({
     status: 'success',
-    message: 'the producto has been created successfully!',
-    producto,
+    message: 'El pago se procesó correctamente',
+    data: paymentData, // ✅ aquí puedes devolver info del pago o lo que quieras
   });
 });
 

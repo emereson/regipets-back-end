@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', pedidoController.findOne);
 router.post('/', pedidoController.create);
-router.get('/webhook', pedidoController.webhook);
+router.post('/webhook', pedidoController.webhook);
 
 router
   .use('/:id', pedidoMiddleware.validateExistPedido)
