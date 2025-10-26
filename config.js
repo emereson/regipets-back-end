@@ -11,4 +11,6 @@ export const {
   WEBHOOK_URL,
   MP_ACCESS_TOKEN,
   FRONTEND_URL,
+  SECRET_JWT_SEED,
+  JWT_EXPIRE_IN,
 } = process.env;

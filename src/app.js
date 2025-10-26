@@ -12,6 +12,9 @@ import { mascotaRouter } from './modules/mascotas/mascota.routes.js';
 import { userRouter } from './modules/user/user.routes.js';
 import { productoRouter } from './modules/producto/producto.routes.js';
 import { pedidoRouter } from './modules/checkout/pedido/pedido.routes.js';
+import { razaRouter } from './modules/razas/raza.routes.js';
+import { especieRouter } from './modules/especies/especie.routes.js';
+import { departamentosRouter } from './modules/ubigeos/departamentos/departamentos.routes.js';
 
 const app = express();
 
@@ -36,9 +39,12 @@ app.use(
 app.use(hpp());
 app.use('/api/v1', limiter);
 app.use('/api/v1/mascota', mascotaRouter);
+app.use('/api/v1/raza', razaRouter);
+app.use('/api/v1/especie', especieRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/producto', productoRouter);
 app.use('/api/v1/pedido', pedidoRouter);
+app.use('/api/v1/departamentos', departamentosRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server! 💀`, 404));

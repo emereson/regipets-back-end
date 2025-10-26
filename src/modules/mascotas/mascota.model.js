@@ -1,8 +1,8 @@
-import { DataTypes } from "sequelize";
-import { db } from "../../db/mysql.js";
+import { DataTypes } from 'sequelize';
+import { db } from '../../db/mysql.js';
 
 const Mascota = db.define(
-  "mascotas",
+  'mascotas',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -17,6 +17,10 @@ const Mascota = db.define(
     },
     nombre: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    imagen: {
+      type: DataTypes.STRING(5000),
       allowNull: true,
     },
     apellido: {
@@ -103,7 +107,7 @@ const Mascota = db.define(
     },
   },
   {
-    tableName: "mascotas",
+    tableName: 'mascotas',
     timestamps: false, // si quieres usar created_at y updated_at manualmente
   }
 );
