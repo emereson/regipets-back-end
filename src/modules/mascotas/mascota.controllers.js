@@ -2,6 +2,11 @@ import { Op } from 'sequelize';
 import { catchAsync } from '../../utils/catchAsync.js';
 import { Mascota } from './mascota.model.js';
 import { AppError } from '../../utils/AppError.js';
+import { Departamentos } from '../ubigeos/departamentos/departamentos.model.js';
+import { Provincias } from '../ubigeos/provincias/provincias.model.js';
+import { Distritos } from '../ubigeos/distritos/distritos.model.js';
+import { User } from '../user/user.model.js';
+import { Raza } from '../razas/raza.model.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
   const { sessionUser } = req;
@@ -41,6 +46,7 @@ export const findAll = catchAsync(async (req, res, next) => {
 export const findAllAdmin = catchAsync(async (req, res, next) => {
   const {
     dniNombre,
+    nombreDueno,
     departamento,
     provincia,
     distrito,
@@ -48,10 +54,19 @@ export const findAllAdmin = catchAsync(async (req, res, next) => {
     raza,
     fechaDesde,
     fechaHasta,
+    page = 1,
+    limit = 100,
   } = req.query;
 
   const whereFilter = {};
+  const userFilter = {};
 
+  if (nombreDueno && nombreDueno.trim().length > 0) {
+    userFilter[Op.or] = [
+      { nombre: { [Op.like]: `%${nombreDueno}%` } },
+      { apellido: { [Op.like]: `%${nombreDueno}%` } },
+    ];
+  }
   // 🔍 Filtro por texto (dni, nombre o apellido)
   if (dniNombre && dniNombre.trim().length > 0) {
     whereFilter[Op.or] = [
@@ -62,39 +77,59 @@ export const findAllAdmin = catchAsync(async (req, res, next) => {
   }
 
   // 📍 Filtros por ubicación
-  if (departamento) whereFilter.departamento = departamento;
-  if (provincia) whereFilter.provincia = provincia;
-  if (distrito) whereFilter.distrito = distrito;
+  if (departamento) whereFilter.departamento_id = departamento;
+  if (provincia) whereFilter.provincia_id = provincia;
+  if (distrito) whereFilter.distrito_id = distrito;
 
   // 🐾 Filtros por tipo de mascota
-  if (especie) whereFilter.especie = especie;
-  if (raza) whereFilter.mascota_raza_id = raza;
+  if (especie) whereFilter.especie_id = especie;
+  if (raza && raza !== 'undefined') {
+    whereFilter.mascota_raza_id = raza;
+  }
 
   // 📅 Filtro por rango de fechas
   if (fechaDesde && fechaHasta) {
-    whereFilter.createdAt = {
+    whereFilter.created_at = {
       [Op.between]: [new Date(fechaDesde), new Date(fechaHasta)],
     };
   } else if (fechaDesde) {
-    whereFilter.createdAt = { [Op.gte]: new Date(fechaDesde) };
+    whereFilter.created_at = { [Op.gte]: new Date(fechaDesde) };
   } else if (fechaHasta) {
-    whereFilter.createdAt = { [Op.lte]: new Date(fechaHasta) };
+    whereFilter.created_at = { [Op.lte]: new Date(fechaHasta) };
   }
 
-  // 🔢 Limitar resultados si no hay filtros
-  const hasFilters = Object.keys(whereFilter).length > 0;
-  const limitValue = hasFilters ? undefined : 10;
+  // 🔢 Paginación
+  const offset = (page - 1) * limit;
 
-  const mascotas = await Mascota.findAll({
+  console.log(whereFilter);
+
+  const mascotas = await Mascota.findAndCountAll({
     where: whereFilter,
+    include: [
+      {
+        model: User,
+        as: 'usuario',
+        where: userFilter,
+      },
+      { model: Raza, as: 'raza' },
+      { model: Departamentos, as: 'departamento' },
+      { model: Provincias, as: 'provincia' },
+      { model: Distritos, as: 'distrito' },
+    ],
     order: [['id', 'DESC']],
-    limit: limitValue,
+    limit: parseInt(limit),
+    offset: parseInt(offset),
   });
+
+  const totalPages = Math.ceil(mascotas.count / limit);
 
   return res.status(200).json({
     status: 'success',
-    results: mascotas.length,
-    mascotas,
+    results: mascotas.rows.length,
+    total: mascotas.count,
+    currentPage: parseInt(page),
+    totalPages,
+    mascotas: mascotas.rows,
   });
 });
 
@@ -118,10 +153,7 @@ export const findOneDni = catchAsync(async (req, res, next) => {
 
   if (!mascota) {
     return next(
-      new AppError(
-        `La mascota con el dni o chip:${dni}, no se encuentra registrada `,
-        404
-      )
+      new AppError(`La mascota con el dni o chip:${dni}, no se encuentra registrada `, 404)
     );
   }
 

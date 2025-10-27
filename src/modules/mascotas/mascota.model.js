@@ -105,6 +105,22 @@ const Mascota = db.define(
       type: DataTypes.STRING(8),
       allowNull: true,
     },
+    especie_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    departamento_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    provincia_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    distrito_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     tableName: 'mascotas',
