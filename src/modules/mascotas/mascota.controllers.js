@@ -101,8 +101,6 @@ export const findAllAdmin = catchAsync(async (req, res, next) => {
   // 🔢 Paginación
   const offset = (page - 1) * limit;
 
-  console.log(whereFilter);
-
   const mascotas = await Mascota.findAndCountAll({
     where: whereFilter,
     include: [

@@ -1,6 +1,5 @@
 import { AppError } from '../../utils/AppError.js';
 import { catchAsync } from '../../utils/catchAsync.js';
-import { User } from '../user/user.model.js';
 import { Raza } from './raza.model.js';
 
 export const validExistRata = catchAsync(async (req, res, next) => {
@@ -10,12 +9,6 @@ export const validExistRata = catchAsync(async (req, res, next) => {
     where: {
       id,
     },
-    include: [
-      {
-        model: User,
-        as: 'usuario',
-      },
-    ],
   });
 
   if (!raza) {

@@ -1,14 +1,29 @@
 import { where } from 'sequelize';
-import {
-  crearPreference,
-  processPayment,
-} from '../../../config/mercadoPago.js';
+import { crearPreference, processPayment } from '../../../config/mercadoPago.js';
 import { db } from '../../../db/mysql.js';
 import { catchAsync } from '../../../utils/catchAsync.js';
 import { costosDelivery } from '../../../utils/costoDelivery.js';
 import { DatosClientes } from '../datosClientes/datosClientes.model.js';
 import { ProductoPedido } from '../productosPedido/productosPedido.model.js';
 import { Pedido } from './pedido.model.js';
+
+export const findAll = catchAsync(async (req, res, next) => {
+  const pedidos = await Pedido.findAll({
+    include: [
+      { model: ProductoPedido, as: 'productos' },
+      {
+        model: DatosClientes,
+        as: 'cliente',
+      },
+    ],
+  });
+
+  return res.status(200).json({
+    status: 'success',
+    results: pedidos.length,
+    pedidos,
+  });
+});
 
 export const findOne = catchAsync(async (req, res, next) => {
   const { pedido } = req;
@@ -25,8 +40,7 @@ export const create = catchAsync(async (req, res, next) => {
   const calcularDelivery = () => {
     const costo = costosDelivery.find(
       (c) =>
-        c.departamento.toUpperCase() ===
-          deliveryInfo.departamento.toUpperCase() &&
+        c.departamento.toUpperCase() === deliveryInfo.departamento.toUpperCase() &&
         c.provincia.toUpperCase() === deliveryInfo.provincia.toUpperCase() &&
         c.distrito.toUpperCase() === deliveryInfo.distrito.toUpperCase()
     );
@@ -107,7 +121,6 @@ export const create = catchAsync(async (req, res, next) => {
 
 export const webhook = catchAsync(async (req, res, next) => {
   const { query } = req;
-  console.log(query);
 
   // 👇 esto está bien, pero ojo: Mercado Pago envía la data en "query" o "body" según el evento
   const paymentId = query.id || query['data.id'];
@@ -116,11 +129,15 @@ export const webhook = catchAsync(async (req, res, next) => {
   }
 
   const paymentData = await processPayment(paymentId);
-  console.log(paymentData);
 
   if (paymentData.status === 'approved') {
     await Pedido.update(
-      { status: 'pagada' },
+      { status: 'pagada', numero_operacion: paymentData.id },
+      { where: { id: paymentData.external_reference } }
+    );
+  } else {
+    await Pedido.update(
+      { status: 'cancelada', numero_operacion: paymentData.id },
       { where: { id: paymentData.external_reference } }
     );
   }

@@ -2,14 +2,44 @@ import bcrypt from 'bcryptjs';
 import { catchAsync } from '../../utils/catchAsync.js';
 import { User } from './user.model.js';
 import { generateJWT } from '../../utils/jwt.js';
+import { Op } from 'sequelize';
 
 export const findAll = catchAsync(async (req, res, next) => {
-  const users = await User.findAll();
+  const { search, rol, page = 1, limit = 100 } = req.query;
+
+  const whereFilter = {};
+
+  if (search && search.trim().length > 0) {
+    whereFilter[Op.or] = [
+      { nombre: { [Op.like]: `%${search}%` } },
+      { apellido: { [Op.like]: `%${search}%` } },
+      { email: { [Op.like]: `%${search}%` } },
+      { celular: { [Op.like]: `%${search}%` } },
+    ];
+  }
+
+  if (rol) {
+    whereFilter.rol = rol;
+  }
+
+  const offset = (page - 1) * limit;
+
+  const users = await User.findAndCountAll({
+    where: whereFilter,
+    order: [['id', 'DESC']],
+    limit: parseInt(limit),
+    offset: parseInt(offset),
+  });
+
+  const totalPages = Math.ceil(users.count / limit);
 
   return res.status(200).json({
     status: 'Success',
-    results: users.length,
-    users,
+    results: users.rows.length,
+    total: users.count,
+    currentPage: parseInt(page),
+    totalPages,
+    users: users.rows,
   });
 });
 

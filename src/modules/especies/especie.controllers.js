@@ -43,6 +43,12 @@ export const update = catchAsync(async (req, res) => {
     title_en,
     title_es,
   });
+
+  res.status(201).json({
+    status: 'success',
+    message: 'the especie has been update successfully!',
+    especie,
+  });
 });
 
 export const deleteItem = catchAsync(async (req, res) => {

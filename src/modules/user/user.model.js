@@ -1,8 +1,8 @@
-import { DataTypes } from "sequelize";
-import { db } from "../../db/mysql.js";
+import { DataTypes } from 'sequelize';
+import { db } from '../../db/mysql.js';
 
 const User = db.define(
-  "users",
+  'users',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -84,9 +84,21 @@ const User = db.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    rol: {
+      type: DataTypes.ENUM(
+        'Admin',
+        'Cliente RUMP',
+        'Cliente Premium',
+        'Embajador',
+        'Aliado',
+        'Gobierno'
+      ),
+      defaultValue: 'Cliente RUMP',
+      allowNull: false,
+    },
   },
   {
-    tableName: "users",
+    tableName: 'users',
     timestamps: false, // usamos manualmente created_at y updated_at
     underscored: true, // para mapear con snake_case
   }

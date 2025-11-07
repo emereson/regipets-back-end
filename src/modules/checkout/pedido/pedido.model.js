@@ -39,6 +39,15 @@ const Pedido = db.define(
       type: DataTypes.ENUM('pendiente', 'pagada', 'cancelada'),
       defaultValue: 'pendiente',
     },
+    numero_operacion: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    fecha_pedido: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     tableName: 'pedidos', // ✅ corregido
