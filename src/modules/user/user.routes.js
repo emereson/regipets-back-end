@@ -9,14 +9,14 @@ const router = express.Router();
 router.post('/login', userController.login);
 
 router.use(authMiddleware.protect);
-router.post('/signup', upload.single('file'), userController.signup);
+router.post('/signup', upload.single('imagen'), userController.signup);
 router.get('/', userController.findAll);
 
-// router
-//   .use("/:id", mascotaMiddleware.validExistMascota)
-//   .route("/:id")
-//   //   .patch(pedidoController.update)
-//   //   .delete(pedidoController.deleteItem)
+router
+  .use('/:id', userMiddleware.validExistUser)
+  .route('/:id')
+  .patch(upload.single('imagen'), userController.update)
+  .delete(userController.deleteItem);
 //   .get(mascotaController.findOne);
 
 const userRouter = router;

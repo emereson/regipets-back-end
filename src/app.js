@@ -15,6 +15,7 @@ import { pedidoRouter } from './modules/checkout/pedido/pedido.routes.js';
 import { razaRouter } from './modules/razas/raza.routes.js';
 import { especieRouter } from './modules/especies/especie.routes.js';
 import { departamentosRouter } from './modules/ubigeos/departamentos/departamentos.routes.js';
+import { convenioRouter } from './modules/convenio/convenio.routes.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/user', userRouter);
 app.use('/api/v1/producto', productoRouter);
 app.use('/api/v1/pedido', pedidoRouter);
 app.use('/api/v1/departamentos', departamentosRouter);
+app.use('/api/v1/convenios', convenioRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server! 💀`, 404));

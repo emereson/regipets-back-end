@@ -26,7 +26,7 @@ const Producto = db.define(
   },
   {
     tableName: 'productos',
-    timestamps: false, // Si quieres manejar created_at y updated_at manualmente
+    timestamps: false,
   }
 );
 

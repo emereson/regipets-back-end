@@ -8,10 +8,14 @@ import { Provincias } from '../modules/ubigeos/provincias/provincias.model.js';
 import { Distritos } from '../modules/ubigeos/distritos/distritos.model.js';
 import { Raza } from '../modules/razas/raza.model.js';
 import { Especie } from '../modules/especies/especie.model.js';
+import { Convenio } from '../modules/convenio/convenio.model.js';
 
 const initModel = () => {
   User.hasMany(Mascota, { foreignKey: 'usuario_id', as: 'mascotas' });
   Mascota.belongsTo(User, { foreignKey: 'usuario_id', as: 'usuario' });
+
+  User.hasMany(Mascota, { foreignKey: 'usuario_registrado_id', as: 'mascotas_creador' });
+  Mascota.belongsTo(User, { foreignKey: 'usuario_registrado_id', as: 'creador' });
 
   // mascota
   Departamentos.hasMany(Mascota, {
@@ -41,6 +45,27 @@ const initModel = () => {
   Especie.hasMany(Raza, { foreignKey: 'especie_id', as: 'razas' });
   Raza.belongsTo(Especie, { foreignKey: 'especie_id', as: 'especie' });
   // Razas
+
+  // Convenios
+  Departamentos.hasMany(Convenio, {
+    foreignKey: 'departamento_id',
+    as: 'convenios',
+  });
+  Convenio.belongsTo(Departamentos, {
+    foreignKey: 'departamento_id',
+    as: 'departamento',
+  });
+
+  Provincias.hasMany(Convenio, { foreignKey: 'provincia_id', as: 'convenios' });
+  Convenio.belongsTo(Provincias, {
+    foreignKey: 'provincia_id',
+    as: 'provincia',
+  });
+
+  Distritos.hasMany(Convenio, { foreignKey: 'distrito_id', as: 'convenios' });
+  Convenio.belongsTo(Distritos, { foreignKey: 'distrito_id', as: 'distrito' });
+
+  // Convenios
 
   Pedido.hasMany(ProductoPedido, { foreignKey: 'pedido_id', as: 'productos' });
   ProductoPedido.belongsTo(Pedido, { foreignKey: 'pedido_id', as: 'pedido' });

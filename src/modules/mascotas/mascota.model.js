@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Sequelize } from 'sequelize';
 import { db } from '../../db/mysql.js';
 
 const Mascota = db.define(
@@ -70,7 +70,11 @@ const Mascota = db.define(
       allowNull: true,
     },
     usuario_id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    usuario_registrado_id: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     created_at: {
@@ -85,10 +89,16 @@ const Mascota = db.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    fecha_inscripcion: {
-      type: DataTypes.STRING(23),
+    direccion: {
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
+    fecha_inscripcion: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_DATE'),
+    },
+
     usuario_crea: {
       type: DataTypes.STRING(12),
       allowNull: true,
@@ -121,10 +131,21 @@ const Mascota = db.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    estado_verificacion: {
+      type: DataTypes.ENUM('APROBADO', 'PENDIENTE', 'DENEGADO'),
+      defaultValue: 'PENDIENTE',
+      allowNull: false,
+    },
+    tipo_mascota: {
+      type: DataTypes.ENUM('PREMIUM', 'CLASICO'),
+      defaultValue: 'CLASICO',
+      allowNull: false,
+    },
   },
   {
+    timestamps: true,
     tableName: 'mascotas',
-    timestamps: false, // si quieres usar created_at y updated_at manualmente
+    underscored: true,
   }
 );
 

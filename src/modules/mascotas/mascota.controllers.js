@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 import { catchAsync } from '../../utils/catchAsync.js';
 import { Mascota } from './mascota.model.js';
 import { AppError } from '../../utils/AppError.js';
@@ -7,13 +7,16 @@ import { Provincias } from '../ubigeos/provincias/provincias.model.js';
 import { Distritos } from '../ubigeos/distritos/distritos.model.js';
 import { User } from '../user/user.model.js';
 import { Raza } from '../razas/raza.model.js';
+import { deleteImage, uploadImage } from '../../utils/serverImage.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
   const { sessionUser } = req;
-  const { dniNombre } = req.query;
+  const { dniNombre, correo } = req.query;
 
   let whereFilter = {};
-  let limitValue = undefined;
+  let whereFilterUser = {};
+
+  let limit = 10;
 
   if (dniNombre && dniNombre.trim().length > 0) {
     whereFilter = {
@@ -24,22 +27,85 @@ export const findAll = catchAsync(async (req, res, next) => {
       ],
     };
   } else {
-    limitValue = 10;
+    limit = 10;
+  }
+
+  if (correo && correo.trim().length > 0) {
+    whereFilterUser = {
+      [Op.or]: [{ email: { [Op.like]: `%${correo}%` } }],
+    };
   }
 
   const mascotas = await Mascota.findAll({
     where: {
-      usuario_id: sessionUser.id,
+      // usuario_id: sessionUser.id,
+      estado_verificacion: 'APROBADO',
       ...whereFilter,
     },
+    include: [
+      { model: User, as: 'usuario', where: whereFilterUser },
+      { model: Raza, as: 'raza' },
+      { model: Departamentos, as: 'departamento' },
+      { model: Provincias, as: 'provincia' },
+      { model: Distritos, as: 'distrito' },
+    ],
     order: [['id', 'DESC']],
-    limit: limitValue,
+    limit: limit,
   });
 
   return res.status(200).json({
     status: 'success',
     results: mascotas.length,
     mascotas,
+  });
+});
+
+export const findAllPendientes = catchAsync(async (req, res, next) => {
+  const { sessionUser } = req;
+  const { correo, rol, estado, page = 1, limit = 100 } = req.query;
+
+  if (sessionUser.rol !== 'Admin') {
+    return next(
+      new AppError('No tienes permisos para ver las mascotas pendientes a aprobación', 403)
+    );
+  }
+
+  let whereFilterUser = {};
+
+  if (correo && correo.trim().length > 0) {
+    whereFilterUser = {
+      [Op.or]: [{ email: { [Op.like]: `%${correo}%` } }],
+    };
+  }
+
+  if (rol && rol.trim().length > 0) {
+    whereFilterUser.rol = rol;
+  }
+
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await Mascota.findAndCountAll({
+    where: {
+      estado_verificacion: estado || 'PENDIENTE',
+    },
+    include: [
+      { model: User, as: 'usuario' },
+      { model: User, as: 'creador', where: whereFilterUser },
+      { model: Raza, as: 'raza' },
+    ],
+    order: [['id', 'DESC']],
+    limit: parseInt(limit),
+    offset: parseInt(offset),
+  });
+
+  const totalPages = Math.ceil(count / limit);
+
+  return res.status(200).json({
+    status: 'success',
+    results: rows.length,
+    mascotas: rows,
+    currentPage: parseInt(page),
+    totalPages,
   });
 });
 
@@ -161,40 +227,136 @@ export const findOneDni = catchAsync(async (req, res, next) => {
   });
 });
 
-// export const create = catchAsync(async (req, res, next) => {
-//   const { tienda, nro_pedido_tienda, fecha } = req.body;
+export const create = catchAsync(async (req, res, next) => {
+  const { sessionUser } = req;
+  const {
+    usuario_id,
+    nombre,
+    sexo,
+    fecha_nacimiento,
+    tamano,
+    color,
+    calificacion,
+    biografia,
+    especie_id,
+    mascota_raza_id,
+    departamento_id,
+    provincia_id,
+    distrito_id,
+    direccion,
+    tipo_mascota,
+  } = req.body;
 
-//   const pedido = await Pedido.create({
-//     tienda,
-//     nro_pedido_tienda,
-//     fecha,
-//   });
+  const file = req.file;
 
-//   res.status(201).json({
-//     status: "success",
-//     message: "the pedido has been created successfully!",
-//     pedido,
-//   });
-// });
+  let uploadedFilename = null;
+  if (file) {
+    uploadedFilename = await uploadImage(file);
+  }
+  const nextNumber = (await Mascota.count()) + 1;
+  const dni = String(nextNumber).padStart(8, '0');
 
-// export const update = catchAsync(async (req, res) => {
-//   const { user } = req;
-//   const { tienda, nro_pedido_tienda, fecha } = req.body;
+  const mascota = await Mascota.create({
+    usuario_registrado_id: sessionUser.id,
+    usuario_id,
+    dni,
+    nombre,
+    sexo,
+    fecha_nacimiento,
+    tamano,
+    color,
+    calificacion,
+    biografia,
+    especie_id,
+    mascota_raza_id,
+    departamento_id,
+    provincia_id,
+    distrito_id,
+    imagen: uploadedFilename,
+    estado_verificacion: sessionUser.rol === 'Admin' ? 'APROBADO' : 'PENDIENTE',
+    direccion,
+    tipo_mascota,
+  });
 
-//   await user.update({
-//     tienda,
-//     nro_pedido_tienda,
-//     fecha,
-//   });
-// });
+  res.status(201).json({
+    status: 'success',
+    message: 'the mascota has been created successfully!',
+    mascota,
+  });
+});
 
-// export const deleteItem = catchAsync(async (req, res) => {
-//   const { pedido } = req;
+export const update = catchAsync(async (req, res) => {
+  const { sessionUser, mascota } = req;
+  const file = req.file;
 
-//   await pedido.destroy();
+  let newFilename = mascota.imagen;
+  const oldFilename = mascota.imagen;
 
-//   return res.status(200).json({
-//     status: "success",
-//     message: `The pedido with id: ${pedido.id} has been deleted`,
-//   });
-// });
+  if (file) {
+    newFilename = await uploadImage(file); // subir primero
+  }
+
+  const updateData = {
+    usuario_registrado_id: sessionUser.id,
+    usuario_id: req.body.usuario_id,
+    nombre: req.body.nombre,
+    sexo: req.body.sexo,
+    fecha_nacimiento: req.body.fecha_nacimiento,
+    tamano: req.body.tamano,
+    color: req.body.color,
+    calificacion: req.body.calificacion,
+    biografia: req.body.biografia,
+    especie_id: req.body.especie_id,
+    mascota_raza_id: req.body.mascota_raza_id,
+    departamento_id: req.body.departamento_id,
+    provincia_id: req.body.provincia_id,
+    distrito_id: req.body.distrito_id,
+    imagen: newFilename,
+    estado_verificacion: sessionUser.rol === 'Admin' ? 'APROBADO' : 'PENDIENTE',
+    direccion: req.body.direccion,
+    tipo_mascota: req.body.tipo_mascota,
+  };
+
+  Object.keys(updateData).forEach((key) => updateData[key] === undefined && delete updateData[key]);
+
+  await mascota.update(updateData);
+
+  // eliminación NO bloqueante
+  if (file && oldFilename && oldFilename !== newFilename) {
+    await deleteImage(oldFilename);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Mascota actualizada correctamente',
+    mascota,
+  });
+});
+
+export const updateEstadoAprobacion = catchAsync(async (req, res) => {
+  const { mascotasIds, estado_verificacion } = req.body;
+
+  await Mascota.update({ estado_verificacion }, { where: { id: mascotasIds } });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'El estado de verificación se actualizó correctamente.',
+  });
+});
+
+export const deleteItem = catchAsync(async (req, res) => {
+  const { mascota } = req;
+
+  let uploadedFilename = mascota.imagen;
+
+  if (uploadedFilename) {
+    await deleteImage(uploadedFilename);
+  }
+
+  await mascota.destroy();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `The mascota with id: ${mascota.id} has been deleted`,
+  });
+});

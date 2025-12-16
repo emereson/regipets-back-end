@@ -3,6 +3,8 @@ import { catchAsync } from '../../utils/catchAsync.js';
 import { User } from './user.model.js';
 import { generateJWT } from '../../utils/jwt.js';
 import { Op } from 'sequelize';
+import { deleteImage, uploadImage } from '../../utils/serverImage.js';
+import { AppError } from '../../utils/AppError.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
   const { search, rol, page = 1, limit = 100 } = req.query;
@@ -49,32 +51,41 @@ export const findAll = catchAsync(async (req, res, next) => {
 //   return res.status(200).json({
 //     status: "Success",
 //     mascota,
-//   });
+//   });=
 // });
 
 export const signup = catchAsync(async (req, res, next) => {
-  const { nombre, dni, correo, celular, password, role } = req.body;
+  const { nombre, apellido, celular, email, password, fecha_nacimiento, foto, sexo, rol } =
+    req.body;
+  const file = req.file;
 
-  const pulgarCorreo = correo.trim().toLowerCase().replace(/\s+/g, '');
+  let uploadedFilename = null;
+
+  if (file) {
+    uploadedFilename = await uploadImage(file);
+  }
+
+  const pulgarCorreo = email.trim().toLowerCase().replace(/\s+/g, '');
 
   const salt = await bcrypt.genSalt(12);
   const encryptedPassword = await bcrypt.hash(password, salt);
 
   const user = await User.create({
     nombre,
-    dni,
-    email: pulgarCorreo,
+    apellido,
     celular,
-    role,
+    email: pulgarCorreo,
+    fecha_nacimiento,
+    foto,
+    sexo,
+    rol,
+    foto: uploadedFilename,
     password: encryptedPassword,
   });
-
-  const token = await generateJWT(user.id);
 
   res.status(201).json({
     status: 'success',
     message: 'the user has been created successfully!',
-    token,
     user,
   });
 });
@@ -107,6 +118,49 @@ export const login = catchAsync(async (req, res, next) => {
   });
 });
 
+export const update = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { nombre, apellido, celular, email, password, fecha_nacimiento, foto, sexo, rol } =
+    req.body;
+  const file = req.file;
+
+  let uploadedFilename = null;
+
+  if (file) {
+    uploadedFilename = await uploadImage(file);
+    await deleteImage(user.foto);
+  }
+
+  const pulgarCorreo = email.trim().toLowerCase().replace(/\s+/g, '');
+
+  const salt = await bcrypt.genSalt(12);
+
+  let encryptedPassword = null;
+
+  if (password?.length > 3) {
+    encryptedPassword = await bcrypt.hash(password, salt);
+  }
+
+  await user.update({
+    nombre,
+    apellido,
+    celular,
+    email: pulgarCorreo,
+    fecha_nacimiento,
+    foto,
+    sexo,
+    rol,
+    foto: uploadedFilename || user.foto,
+    password: encryptedPassword || user.password,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    message: 'the user has been created successfully!',
+    user,
+  });
+});
+
 // async function cambiarPassword() {
 //   const usuarios = await User.findAll();
 //   const salt = await bcrypt.genSalt(12);
@@ -131,13 +185,15 @@ export const login = catchAsync(async (req, res, next) => {
 //   });
 // });
 
-// export const deleteItem = catchAsync(async (req, res) => {
-//   const { pedido } = req;
+export const deleteItem = catchAsync(async (req, res) => {
+  const { user } = req;
 
-//   await pedido.destroy();
+  await deleteImage(user.foto);
 
-//   return res.status(200).json({
-//     status: "success",
-//     message: `The pedido with id: ${pedido.id} has been deleted`,
-//   });
-// });
+  await user.destroy();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `The user with id: ${user.id} has been deleted`,
+  });
+});
