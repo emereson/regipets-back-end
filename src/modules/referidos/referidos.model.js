@@ -12,9 +12,13 @@ const Referido = db.define('referidos', {
     type: DataTypes.INTEGER(255),
     allowNull: true,
   },
-  referido_id: {
+  pedido_id: {
     type: DataTypes.INTEGER(255),
     allowNull: true,
+  },
+  estado: {
+    type: DataTypes.ENUM('cobrado', 'pendiente'),
+    defaultValue: 'pendiente',
   },
 });
 

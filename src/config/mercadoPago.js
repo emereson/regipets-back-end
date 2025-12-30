@@ -42,7 +42,6 @@ export const crearPreference = async (pedido, productos, customerData) => {
 
     external_reference: String(pedido.id),
   };
-  console.log(`${WEBHOOK_URL}/pedido/webhook`);
 
   const response = await preference.create({ body });
 

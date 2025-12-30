@@ -9,6 +9,7 @@ import { Distritos } from '../modules/ubigeos/distritos/distritos.model.js';
 import { Raza } from '../modules/razas/raza.model.js';
 import { Especie } from '../modules/especies/especie.model.js';
 import { Convenio } from '../modules/convenio/convenio.model.js';
+import { Referido } from '../modules/referidos/referidos.model.js';
 
 const initModel = () => {
   User.hasMany(Mascota, { foreignKey: 'usuario_id', as: 'mascotas' });
@@ -72,6 +73,9 @@ const initModel = () => {
 
   Pedido.hasOne(DatosClientes, { foreignKey: 'pedido_id', as: 'cliente' });
   DatosClientes.belongsTo(Pedido, { foreignKey: 'pedido_id', as: 'pedido' });
+
+  Pedido.hasOne(Referido, { foreignKey: 'pedido_id', as: 'referido' });
+  Referido.belongsTo(Pedido, { foreignKey: 'pedido_id', as: 'pedido' });
 };
 
 export { initModel };

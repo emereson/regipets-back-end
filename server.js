@@ -1,22 +1,23 @@
-import { db } from "./src/db/mysql.js";
-import { app } from "./src/app.js";
-import { PORT } from "./config.js";
-import { initModel } from "./src/db/initModels.js";
+import { db } from './src/db/mysql.js';
+import { app } from './src/app.js';
+import { PORT } from './config.js';
+import { initModel } from './src/db/initModels.js';
+import logger from './src/utils/logger.js';
 
 db.authenticate()
   .then(() => {
-    console.log(`Database Synced 💪`);
+    logger.info(`Database Synced 💪`);
     app.listen(PORT, () => {
-      console.log(`App Running on Port ${PORT}`);
+      logger.info(`App Running on Port ${PORT}`);
     });
   })
   .then(() => {
-    console.log(`Database Authenticated! 👍`);
+    logger.info(`Database Authenticated! 👍`);
     return initModel();
   })
   .then(() => {
     return db.sync();
   })
   .catch((err) => {
-    console.error("Error connecting to the database:", err);
+    logger.error('Error connecting to the database:', err);
   });

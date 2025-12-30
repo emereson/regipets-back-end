@@ -23,7 +23,6 @@ const Pedido = db.define(
       allowNull: false,
     },
     sub_total: {
-      // ✅ corregí el typo (antes estaba sub_totoal)
       type: DataTypes.FLOAT,
       allowNull: false,
     },

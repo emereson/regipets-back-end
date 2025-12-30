@@ -6,6 +6,7 @@ import { costosDelivery } from '../../../utils/costoDelivery.js';
 import { DatosClientes } from '../datosClientes/datosClientes.model.js';
 import { ProductoPedido } from '../productosPedido/productosPedido.model.js';
 import { Pedido } from './pedido.model.js';
+import { Referido } from '../../referidos/referidos.model.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
   const pedidos = await Pedido.findAll({
@@ -35,7 +36,7 @@ export const findOne = catchAsync(async (req, res, next) => {
 });
 
 export const create = catchAsync(async (req, res, next) => {
-  const { customerData, deliveryInfo, productos } = req.body;
+  const { customerData, deliveryInfo, productos, referido_id } = req.body;
 
   const calcularDelivery = () => {
     const costo = costosDelivery.find(
@@ -85,6 +86,13 @@ export const create = catchAsync(async (req, res, next) => {
       },
       { transaction: t }
     );
+
+    if (referido_id) {
+      await Referido.create({
+        user_id: referido_id,
+        pedido_id: pedido.id,
+      });
+    }
 
     for (const producto of productos) {
       await ProductoPedido.create(

@@ -19,12 +19,16 @@ const Mascota = db.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    apellido: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     imagen: {
       type: DataTypes.STRING(5000),
       allowNull: true,
     },
-    apellido: {
-      type: DataTypes.STRING(255),
+    responsable_2: {
+      type: DataTypes.STRING(5000),
       allowNull: true,
     },
     sexo: {

@@ -20,10 +20,23 @@ const Convenio = db.define('convenios', {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
-  punto_autorizado: {
-    type: DataTypes.BOOLEAN,
+  logo_convenio: {
+    type: DataTypes.STRING(5000),
     allowNull: true,
   },
+  categoria_convenio: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  beneficio_convenio: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  direccion_convenio: {
+    type: DataTypes.STRING(5000),
+    allowNull: true,
+  },
+
   departamento_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
