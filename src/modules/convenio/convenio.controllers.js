@@ -6,7 +6,16 @@ import { Provincias } from '../ubigeos/provincias/provincias.model.js';
 import { Convenio } from './convenio.model.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
+  const { categoria } = req.query;
+
+  let whereConveio = {};
+
+  if (categoria && categoria !== 'Todos') {
+    whereConveio.categoria_convenio = categoria;
+  }
+
   const convenios = await Convenio.findAll({
+    where: whereConveio,
     include: [
       { model: Departamentos, as: 'departamento' },
       { model: Provincias, as: 'provincia' },
@@ -42,6 +51,7 @@ export const create = catchAsync(async (req, res, next) => {
     categoria_convenio,
     beneficio_convenio,
     direccion_convenio,
+    link_direccion,
   } = req.body;
 
   const file = req.file;
@@ -62,6 +72,7 @@ export const create = catchAsync(async (req, res, next) => {
     categoria_convenio,
     beneficio_convenio,
     direccion_convenio,
+    link_direccion,
   });
 
   res.status(201).json({
@@ -83,6 +94,7 @@ export const update = catchAsync(async (req, res) => {
     categoria_convenio,
     beneficio_convenio,
     direccion_convenio,
+    link_direccion,
   } = req.body;
   const file = req.file;
 
@@ -104,6 +116,7 @@ export const update = catchAsync(async (req, res) => {
     categoria_convenio,
     beneficio_convenio,
     direccion_convenio,
+    link_direccion,
   });
 
   if (file && oldFilename && oldFilename !== newFilename) {

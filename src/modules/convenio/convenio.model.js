@@ -16,6 +16,10 @@ const Convenio = db.define('convenios', {
     type: DataTypes.STRING(555),
     allowNull: true,
   },
+  link_direccion: {
+    type: DataTypes.STRING(555),
+    allowNull: true,
+  },
   telefono: {
     type: DataTypes.STRING(255),
     allowNull: true,
