@@ -6,13 +6,17 @@ import { Provincias } from '../ubigeos/provincias/provincias.model.js';
 import { Convenio } from './convenio.model.js';
 
 export const findAll = catchAsync(async (req, res, next) => {
-  const { categoria } = req.query;
+  const { categoria, departamento, provincia, distrito } = req.query;
 
   let whereConveio = {};
 
   if (categoria && categoria !== 'Todos') {
     whereConveio.categoria_convenio = categoria;
   }
+
+  if (departamento) whereConveio.departamento_id = departamento;
+  if (provincia) whereConveio.provincia_id = provincia;
+  if (distrito) whereConveio.distrito_id = distrito;
 
   const convenios = await Convenio.findAll({
     where: whereConveio,

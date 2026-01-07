@@ -31,6 +31,14 @@ const Mascota = db.define(
       type: DataTypes.STRING(5000),
       allowNull: true,
     },
+    dni_responsable_2: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    telefono_responsable_2: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     sexo: {
       type: DataTypes.STRING(255),
       allowNull: true,
