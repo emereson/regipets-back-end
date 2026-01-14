@@ -35,15 +35,18 @@ export const findAll = catchAsync(async (req, res, next) => {
       [Op.or]: [{ email: { [Op.like]: `%${correo}%` } }],
     };
   }
+  if (sessionUser.rol !== 'Admin') {
+    whereFilter.usuario_id = sessionUser.id;
+  }
 
   const mascotas = await Mascota.findAll({
     where: {
-      // usuario_id: sessionUser.id,
       estado_verificacion: 'APROBADO',
       ...whereFilter,
     },
     include: [
       { model: User, as: 'usuario', where: whereFilterUser },
+      { model: User, as: 'creador' },
       { model: Raza, as: 'raza' },
       { model: Departamentos, as: 'departamento' },
       { model: Provincias, as: 'provincia' },
@@ -178,6 +181,7 @@ export const findAllAdmin = catchAsync(async (req, res, next) => {
         as: 'usuario',
         where: userFilter,
       },
+      { model: User, as: 'creador' },
       { model: Raza, as: 'raza' },
       { model: Departamentos, as: 'departamento' },
       { model: Provincias, as: 'provincia' },
@@ -260,8 +264,20 @@ export const create = catchAsync(async (req, res, next) => {
   if (file) {
     uploadedFilename = await uploadImage(file);
   }
-  const nextNumber = (await Mascota.count()) + 1;
-  const dni = String(nextNumber).padStart(8, '0');
+
+  const generateRandomDni = async () => {
+    let dni;
+    let exists = true;
+
+    while (exists) {
+      dni = Math.floor(10000000 + Math.random() * 90000000).toString(); // 8 dígitos
+      exists = await Mascota.findOne({ where: { dni } });
+    }
+
+    return dni;
+  };
+
+  const dni = await generateRandomDni();
 
   const mascota = await Mascota.create({
     usuario_registrado_id: sessionUser.id,

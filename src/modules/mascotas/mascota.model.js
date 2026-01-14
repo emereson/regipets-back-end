@@ -66,12 +66,12 @@ const Mascota = db.define(
     castrado: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: 0,
+      defaultValue: false,
     },
     fallecido: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: 0,
+      defaultValue: false,
     },
     estado: {
       type: DataTypes.STRING(6),
@@ -89,14 +89,6 @@ const Mascota = db.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    created_at: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    updated_at: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
     cod_microchip: {
       type: DataTypes.STRING(255),
       allowNull: true,
@@ -110,7 +102,6 @@ const Mascota = db.define(
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_DATE'),
     },
-
     usuario_crea: {
       type: DataTypes.STRING(12),
       allowNull: true,
@@ -145,18 +136,18 @@ const Mascota = db.define(
     },
     estado_verificacion: {
       type: DataTypes.ENUM('APROBADO', 'PENDIENTE', 'DENEGADO'),
-      defaultValue: 'PENDIENTE',
       allowNull: false,
+      defaultValue: 'PENDIENTE',
     },
     tipo_mascota: {
       type: DataTypes.ENUM('PREMIUM', 'CLASICO'),
-      defaultValue: 'CLASICO',
       allowNull: false,
+      defaultValue: 'CLASICO',
     },
   },
   {
-    timestamps: true,
     tableName: 'mascotas',
+    timestamps: true,
     underscored: true,
   }
 );
