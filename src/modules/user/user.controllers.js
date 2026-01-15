@@ -6,12 +6,18 @@ import { Op } from 'sequelize';
 import { deleteImage, uploadImage } from '../../utils/serverImage.js';
 import { AppError } from '../../utils/AppError.js';
 
-export const findAll = catchAsync(async (req, res, next) => {
-  const { search, rol, page = 1, limit = 100 } = req.query;
+export const findAll = catchAsync(async (req, res) => {
+  const { sessionUser } = req;
+  const { search, rol } = req.query;
+
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 100;
+  const offset = (page - 1) * limit;
 
   const whereFilter = {};
 
-  if (search && search.trim().length > 0) {
+  // 🔍 Búsqueda
+  if (search?.trim()) {
     whereFilter[Op.or] = [
       { nombre: { [Op.like]: `%${search}%` } },
       { apellido: { [Op.like]: `%${search}%` } },
@@ -20,27 +26,46 @@ export const findAll = catchAsync(async (req, res, next) => {
     ];
   }
 
-  if (rol) {
+  // 🎭 Filtro por rol (solo Admin)
+  if (rol && sessionUser.rol === 'Admin') {
     whereFilter.rol = rol;
   }
 
-  const offset = (page - 1) * limit;
+  /**
+   * 🔐 VISIBILIDAD
+   */
+  if (sessionUser.rol !== 'Admin') {
+    // ⛔ SOLO si NO es admin
+
+    const visibilityRules = [{ id: sessionUser.id }];
+
+    if (sessionUser.rol === 'Aliado') {
+      visibilityRules.push({ creador_usuario_id: sessionUser.id });
+    }
+
+    // Combinar con búsqueda si existe
+    whereFilter[Op.and] = [
+      ...(whereFilter[Op.or] ? [{ [Op.or]: whereFilter[Op.or] }] : []),
+      { [Op.or]: visibilityRules },
+    ];
+
+    // Limpiar OR anterior para evitar conflicto
+    delete whereFilter[Op.or];
+  }
 
   const users = await User.findAndCountAll({
     where: whereFilter,
     order: [['id', 'DESC']],
-    limit: parseInt(limit),
-    offset: parseInt(offset),
+    limit,
+    offset,
   });
-
-  const totalPages = Math.ceil(users.count / limit);
 
   return res.status(200).json({
     status: 'Success',
     results: users.rows.length,
     total: users.count,
-    currentPage: parseInt(page),
-    totalPages,
+    currentPage: page,
+    totalPages: Math.ceil(users.count / limit),
     users: users.rows,
   });
 });
@@ -55,6 +80,7 @@ export const findAll = catchAsync(async (req, res, next) => {
 // });
 
 export const signup = catchAsync(async (req, res, next) => {
+  const { sessionUser } = req;
   const { nombre, apellido, celular, email, password, fecha_nacimiento, foto, sexo, rol } =
     req.body;
   const file = req.file;
@@ -81,6 +107,7 @@ export const signup = catchAsync(async (req, res, next) => {
     rol,
     foto: uploadedFilename,
     password: encryptedPassword,
+    creador_usuario_id: sessionUser.id,
   });
 
   res.status(201).json({

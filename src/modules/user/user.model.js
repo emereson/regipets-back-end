@@ -72,7 +72,7 @@ const User = db.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    usuario_perfil_id: {
+    creador_usuario_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },

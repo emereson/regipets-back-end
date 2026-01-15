@@ -9,43 +9,53 @@ import { User } from '../user/user.model.js';
 import { Raza } from '../razas/raza.model.js';
 import { deleteImage, uploadImage } from '../../utils/serverImage.js';
 
-export const findAll = catchAsync(async (req, res, next) => {
+export const findAll = catchAsync(async (req, res) => {
   const { sessionUser } = req;
   const { dniNombre, correo } = req.query;
 
-  let whereFilter = {};
-  let whereFilterUser = {};
-
   let limit = 10;
 
-  if (dniNombre && dniNombre.trim().length > 0) {
-    whereFilter = {
-      [Op.or]: [
-        { dni: { [Op.like]: `%${dniNombre}%` } },
-        { nombre: { [Op.like]: `%${dniNombre}%` } },
-        { apellido: { [Op.like]: `%${dniNombre}%` } },
-      ],
-    };
-  } else {
-    limit = 10;
+  const whereMascota = {};
+  const whereUser = {};
+
+  // 🔍 Buscar por DNI / nombre / apellido
+  if (dniNombre?.trim()) {
+    whereMascota[Op.or] = [
+      { dni: { [Op.like]: `%${dniNombre}%` } },
+      { nombre: { [Op.like]: `%${dniNombre}%` } },
+      { apellido: { [Op.like]: `%${dniNombre}%` } },
+    ];
   }
 
-  if (correo && correo.trim().length > 0) {
-    whereFilterUser = {
-      [Op.or]: [{ email: { [Op.like]: `%${correo}%` } }],
-    };
+  // 🔍 Buscar por correo del usuario
+  if (correo?.trim()) {
+    whereUser.email = { [Op.like]: `%${correo}%` };
   }
+
+  /**
+   * 🔐 VISIBILIDAD POR ROL
+   */
   if (sessionUser.rol !== 'Admin') {
-    whereFilter.usuario_id = sessionUser.id;
+    whereMascota[Op.and] = [
+      ...(whereMascota[Op.or] ? [{ [Op.or]: whereMascota[Op.or] }] : []),
+      {
+        [Op.or]: [{ usuario_id: sessionUser.id }, { usuario_registrado_id: sessionUser.id }],
+      },
+    ];
+
+    // Evitar conflicto
+    delete whereMascota[Op.or];
   }
 
   const mascotas = await Mascota.findAll({
-    where: {
-      estado_verificacion: 'APROBADO',
-      ...whereFilter,
-    },
+    where: whereMascota,
     include: [
-      { model: User, as: 'usuario', where: whereFilterUser },
+      {
+        model: User,
+        as: 'usuario',
+        where: whereUser,
+        required: false, // 🔴 IMPORTANTE para que no filtre mascotas sin correo
+      },
       { model: User, as: 'creador' },
       { model: Raza, as: 'raza' },
       { model: Departamentos, as: 'departamento' },
@@ -53,7 +63,7 @@ export const findAll = catchAsync(async (req, res, next) => {
       { model: Distritos, as: 'distrito' },
     ],
     order: [['id', 'DESC']],
-    limit: limit,
+    limit,
   });
 
   return res.status(200).json({
@@ -300,7 +310,8 @@ export const create = catchAsync(async (req, res, next) => {
     provincia_id,
     distrito_id,
     imagen: uploadedFilename,
-    estado_verificacion: sessionUser.rol === 'Admin' ? 'APROBADO' : 'PENDIENTE',
+    estado_verificacion:
+      sessionUser.rol === 'Admin' || sessionUser.rol === 'Gobierno' ? 'APROBADO' : 'PENDIENTE',
     direccion,
     tipo_mascota,
   });
@@ -343,7 +354,6 @@ export const update = catchAsync(async (req, res) => {
     provincia_id: req.body.provincia_id,
     distrito_id: req.body.distrito_id,
     imagen: newFilename,
-    estado_verificacion: sessionUser.rol === 'Admin' ? 'APROBADO' : 'PENDIENTE',
     direccion: req.body.direccion,
     tipo_mascota: req.body.tipo_mascota,
   };
